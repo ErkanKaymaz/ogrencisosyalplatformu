@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Profilim</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-light bg-white px-4 border-bottom fixed-top">
+        <div class="container">
+            <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Ana Sayfa</a>
+            <span class="fw-bold ms-3 text-primary">Profilim</span>
+            <div class="ms-auto">
+                 <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Çıkış</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 pt-4">
+        <div class="row">
+            
+            <div class="col-md-4 mb-3">
+                <div class="card p-4 text-center">
+                    <img th:if="${ben.profilResmiBase64 != null}" th:src="@{'data:image/png;base64,' + ${ben.profilResmiBase64}}" class="rounded-circle mx-auto mb-3 shadow" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #b60e26;">
+                    <div th:if="${ben.profilResmiBase64 == null}" class="mx-auto nav-avatar shadow mb-3" style="width: 120px; height: 120px; font-size: 3rem;">
+                        <span th:text="${#strings.substring(ben.adSoyad,0,1)}">A</span>
+                    </div>
+                    
+                    <h3 class="fw-bold text-dark" th:text="${ben.adSoyad}">Ad Soyad</h3>
+                    <p class="text-muted" th:text="${ben.bolum}">Bölüm</p>
+                    
+                    <button class="btn btn-outline-primary btn-sm mt-2 w-100" type="button" data-bs-toggle="collapse" data-bs-target="#ayarlarAlani">
+                        <i class="fas fa-cog"></i> Profili Düzenle
+                    </button>
+                    
+                    <div class="collapse mt-3 text-start" id="ayarlarAlani">
+                        <div class="card card-body bg-light border-0">
+                            <form th:action="@{/profil-bilgi-guncelle}" method="post">
+                                <div class="mb-2"><small class="fw-bold">Ad Soyad</small><input type="text" name="adSoyad" class="form-control form-control-sm" th:value="${ben.adSoyad}" required></div>
+                                <div class="mb-2"><small class="fw-bold">Bölüm</small><input type="text" name="bolum" class="form-control form-control-sm" th:value="${ben.bolum}" required></div>
+                                <div class="mb-2"><small class="fw-bold">Yeni Şifre</small><input type="password" name="yeniSifre" class="form-control form-control-sm" placeholder="******"></div>
+                                <button type="submit" class="btn btn-success btn-sm w-100 mt-2">Güncelle</button>
+                            </form>
+                            <hr>
+                            <form th:action="@{/profil-resmi-guncelle}" method="post" enctype="multipart/form-data">
+                                <small class="fw-bold">Fotoğraf</small>
+                                <input type="file" name="resim" class="form-control form-control-sm mb-2" accept="image/*" required>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Resmi Değiştir</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#gonderiler">Gönderilerim</button></li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-bold text-danger position-relative" data-bs-toggle="tab" data-bs-target="#istekler">
+                            Gelen İstekler
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  th:if="${!istekler.empty}" 
+                                  th:text="${#lists.size(istekler)}">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#takipettiklerim">Takip Ettiklerim (<span th:text="${#lists.size(ben.takipEdilenler)}"></span>)</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#takipciler">Takipçilerim (<span th:text="${#lists.size(ben.takipciler)}"></span>)</button></li>
+                </ul>
+                
+                <div class="tab-content bg-white rounded-3 shadow-sm p-4 border-0">
+                    
+                    <div class="tab-pane fade show active" id="gonderiler">
+                        <div th:each="g : ${gonderilerim}">
+                            
+                            <div class="card mb-3 border shadow-none bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted" th:text="${#temporals.format(g.tarih, 'dd MMM HH:mm')}">Tarih</small>
+                                        
+                                        <button class="btn btn-sm btn-outline-danger border-0" 
+                                                data-bs-toggle="modal" 
+                                                th:data-bs-target="'#gonderiSilModal-' + ${g.id}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+
+                                    <p class="card-text text-dark" th:text="${g.metin}">Metin</p>
+                                    <img th:if="${g.resimBase64 != null}" th:src="@{'data:image/png;base64,' + ${g.resimBase64}}" class="img-fluid rounded-3 shadow-sm mb-2" style="max-height: 200px;">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="text-muted small"><i class="fas fa-heart text-danger"></i> <span th:text="${g.begeniSayisi}"></span> Beğeni</div>
+                                        <button class="btn btn-sm text-secondary" type="button" data-bs-toggle="collapse" th:data-bs-target="'#yorumlar-' + ${g.id}">
+                                            <i class="fas fa-comment"></i> Yorumlar (<span th:text="${#lists.size(g.yorumlar)}"></span>)
+                                        </button>
+                                    </div>
+
+                                    <div class="collapse mt-2 ps-3 border-start border-3 border-danger" th:id="'yorumlar-' + ${g.id}">
+                                        <div th:each="yorum : ${g.yorumlar}">
+                                            <div class="d-flex justify-content-between align-items-start mb-2 pt-2 border-top">
+                                                <div>
+                                                    <strong class="small text-primary" th:text="${yorum.yazar.adSoyad}">Biri</strong>:
+                                                    <span class="small" th:text="${yorum.icerik}">İçerik</span>
+                                                    <div th:if="${yorum.resimBase64 != null}" class="mt-1">
+                                                        <img th:src="@{'data:image/png;base64,' + ${yorum.resimBase64}}" style="height: 50px; border-radius: 4px;">
+                                                    </div>
+                                                </div>
+                                                
+                                                <button class="btn btn-sm text-danger p-0 ms-2" 
+                                                        data-bs-toggle="modal" 
+                                                        th:data-bs-target="'#yorumSilModal-' + ${yorum.id}">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+
+                                            </div>
+                                        <div th:if="${g.yorumlar.empty}" class="text-muted small py-2">Henüz yorum yok.</div>
+                                    </div>
+
+                                </div>
+                            </div> <div class="modal fade" th:id="'gonderiSilModal-' + ${g.id}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                        <div class="modal-body text-center p-4">
+                                            <div class="mb-3">
+                                                <div class="mx-auto mb-3" style="width: 60px; height: 60px; border-radius: 50%; background-color: #fcece6; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-trash-alt fa-2x text-danger"></i>
+                                                </div>
+                                                <h6 class="fw-bold text-dark">Gönderiyi Sil?</h6>
+                                                <p class="text-muted small mb-0">Bu işlem geri alınamaz.</p>
+                                            </div>
+                                            <div class="d-grid gap-2">
+                                                <a th:href="@{/profil/gonderi-sil/{id}(id=${g.id})}" class="btn btn-danger rounded-pill fw-bold">Evet, Sil</a>
+                                                <button type="button" class="btn btn-light rounded-pill text-muted" data-bs-dismiss="modal">Vazgeç</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div th:each="yorum : ${g.yorumlar}">
+                                <div class="modal fade" th:id="'yorumSilModal-' + ${yorum.id}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered modal-sm">
+                                        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                            <div class="modal-body text-center p-3">
+                                                <h6 class="fw-bold text-dark mb-2">Yorumu Kaldır?</h6>
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button type="button" class="btn btn-sm btn-light rounded-pill" data-bs-dismiss="modal">İptal</button>
+                                                    <a th:href="@{/profil/yorum-sil/{gid}/{yid}(gid=${g.id}, yid=${yorum.id})}" class="btn btn-sm btn-danger rounded-pill fw-bold">Sil</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div> <div th:if="${gonderilerim.empty}" class="text-center text-muted py-4"><i class="fas fa-ghost fa-2x mb-2 opacity-25"></i><br>Hiç gönderin yok.</div>
+                    </div>
+
+                    <div class="tab-pane fade" id="istekler">
+                        <div th:each="istek : ${istekler}" class="d-flex justify-content-between align-items-center border-bottom py-3">
+                            <div class="d-flex align-items-center">
+                                <img th:if="${istek.istekAtan.profilResmiBase64 != null}" th:src="@{'data:image/png;base64,' + ${istek.istekAtan.profilResmiBase64}}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                <div th:if="${istek.istekAtan.profilResmiBase64 == null}" class="nav-avatar me-3" style="width:40px; height:40px;"><span th:text="${#strings.substring(istek.istekAtan.adSoyad,0,1)}">A</span></div>
+                                <div><span class="fw-bold text-dark d-block" th:text="${istek.istekAtan.adSoyad}">İsim</span><small class="text-muted">Seni takip etmek istiyor.</small></div>
+                            </div>
+                            <div>
+                                <a th:href="@{/istek-kabul/{id}(id=${istek.id})}" class="btn btn-sm btn-success rounded-pill me-1">Kabul</a>
+                                <a th:href="@{/istek-reddet/{id}(id=${istek.id})}" class="btn btn-sm btn-secondary rounded-pill">Red</a>
+                            </div>
+                        </div>
+                        <div th:if="${istekler.empty}" class="text-center text-muted py-4">Bekleyen istek yok.</div>
+                    </div>
+
+                    <div class="tab-pane fade" id="takipettiklerim">
+                        <div th:each="kisi : ${ben.takipEdilenler}" class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div class="d-flex align-items-center">
+                                 <img th:if="${kisi.profilResmiBase64 != null}" th:src="@{'data:image/png;base64,' + ${kisi.profilResmiBase64}}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                 <div th:if="${kisi.profilResmiBase64 == null}" class="nav-avatar me-2" style="width:32px; height:32px; font-size:12px;"><span th:text="${#strings.substring(kisi.adSoyad,0,1)}">A</span></div>
+                                <span th:text="${kisi.adSoyad}" class="fw-bold text-dark">İsim</span>
+                            </div>
+                            <a th:href="@{/takip-birak/{id}(id=${kisi.id})}" class="btn btn-outline-danger btn-sm rounded-pill">Takibi Bırak</a>
+                        </div>
+                        <div th:if="${ben.takipEdilenler.empty}" class="text-center text-muted py-4">Kimseyi takip etmiyorsun.</div>
+                    </div>
+
+                    <div class="tab-pane fade" id="takipciler">
+                        <div th:each="kisi : ${ben.takipciler}" class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div class="d-flex align-items-center">
+                                 <img th:if="${kisi.profilResmiBase64 != null}" th:src="@{'data:image/png;base64,' + ${kisi.profilResmiBase64}}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                 <div th:if="${kisi.profilResmiBase64 == null}" class="nav-avatar me-2" style="width:32px; height:32px; font-size:12px;"><span th:text="${#strings.substring(kisi.adSoyad,0,1)}">A</span></div>
+                                <span th:text="${kisi.adSoyad}" class="fw-bold text-dark">İsim</span>
+                            </div>
+                            <a th:href="@{/takipci-cikar/{id}(id=${kisi.id})}" class="btn btn-outline-warning btn-sm rounded-pill text-dark">Listeden Çıkar</a>
+                        </div>
+                         <div th:if="${ben.takipciler.empty}" class="text-center text-muted py-4">Henüz takipçin yok.</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

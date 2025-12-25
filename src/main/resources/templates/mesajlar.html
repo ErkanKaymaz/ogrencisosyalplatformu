@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mesajlar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/mesaj.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-outline-secondary btn-sm me-3 rounded-pill border-0 bg-light">
+                    <i class="fas fa-arrow-left"></i> Ana Sayfa
+                </a>
+                <span class="navbar-brand mb-0 h1" style="font-size: 1.2rem;">
+                    <i class="fas fa-comments text-burgundy"></i> Sohbetler
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="chat-layout">
+        
+        <div class="sidebar">
+            <div class="stories-container">
+                <div class="my-location-btn" onclick="konumIslemi()">
+                    <div class="my-location-icon" id="myLocIcon">
+                        <i class="fas fa-map-marker-alt" id="locIconSymbol"></i>
+                    </div>
+                    <span class="story-name" id="myLocText">Paylaş</span>
+                </div>
+
+                <a th:each="arkadas : ${arkadaslar}" 
+                   th:if="${arkadas.enlem != null}" 
+                   th:href="@{'https://www.google.com/maps?q=' + ${arkadas.enlem} + ',' + ${arkadas.boylam}}"
+                   target="_blank"
+                   class="story-item active" 
+                   title="Haritada Gör">
+                    
+                    <div class="story-ring">
+                        <img th:if="${arkadas.profilResmiBase64 != null}" 
+                             th:src="@{'data:image/png;base64,' + ${arkadas.profilResmiBase64}}" 
+                             class="story-avatar">
+                        <div th:if="${arkadas.profilResmiBase64 == null}" 
+                             class="story-avatar bg-secondary d-flex align-items-center justify-content-center text-white small">
+                             <span th:text="${#strings.substring(arkadas.adSoyad, 0, 1)}">A</span>
+                        </div>
+                    </div>
+                    <span class="story-name" th:text="${arkadas.adSoyad}">İsim</span>
+                </a>
+            </div>
+
+            <div class="sidebar-header">
+                <small class="text-muted fw-bold">TÜM ARKADAŞLAR</small>
+            </div>
+            
+            <div class="user-list">
+                <div th:each="arkadas : ${arkadaslar}" 
+                     class="user-card"
+                     th:data-id="${arkadas.id}"
+                     th:data-ad="${arkadas.adSoyad}"
+                     onclick="sohbetSec(this)">
+                    
+                    <img th:if="${arkadas.profilResmiBase64 != null}" 
+                         th:src="@{'data:image/png;base64,' + ${arkadas.profilResmiBase64}}" 
+                         class="user-avatar shadow-sm">
+                    <div th:if="${arkadas.profilResmiBase64 == null}" 
+                         class="user-avatar shadow-sm" 
+                         th:text="${#strings.substring(arkadas.adSoyad, 0, 1)}">A</div>
+
+                    <div class="user-info">
+                        <h6 th:text="${arkadas.adSoyad}">İsim Soyad</h6>
+                        <span th:text="${arkadas.bolum}">Bölüm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-panel">
+            <div class="chat-header-bar">
+                <h5 class="m-0 fw-bold text-burgundy" id="chat-header-name">
+                    <i class="far fa-comment-dots"></i> Bir kişi seçin
+                </h5>
+            </div>
+
+            <div class="messages-area" id="chat-box">
+                <div class="chat-placeholder">
+                    <i class="fas fa-paper-plane fa-3x mb-3 opacity-25"></i>
+                    <p>Mesajlaşmaya başlamak için soldan bir arkadaşını seç.</p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <label class="btn btn-light rounded-circle text-secondary" style="cursor: pointer; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Resim Gönder">
+                    <i class="fas fa-paperclip"></i>
+                    <input type="file" id="resim-input" accept="image/*" hidden onchange="resimSecildi(this)">
+                </label>
+                <input type="text" id="mesaj-input" class="chat-input" placeholder="Bir mesaj yaz..." autocomplete="off">
+                <button onclick="mesajGonder()" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-toast" class="custom-toast">
+        <i class="fas fa-info-circle me-2"></i> <span id="toast-msg">Bildirim</span>
+    </div>
+
+    <div class="modal fade" id="konumKapatModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+          <div class="modal-body text-center p-4">
+            <div class="mb-3">
+                <i class="fas fa-map-marker-alt fa-3x text-danger opacity-50"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-2">Konumu Kapat?</h6>
+            <p class="text-muted small mb-4">Arkadaşların artık haritada seni göremeyecek. Emin misin?</p>
+            
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-danger rounded-pill fw-bold" onclick="konumuKapat()">Evet, Kapat</button>
+                <button type="button" class="btn btn-light rounded-pill text-muted" data-bs-dismiss="modal">Vazgeç</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window.benimIdGlobal = /*[[${ben.id}]]*/ 0;
+        var benimKonumumVar = /*[[${ben.enlem != null}]]*/ false;
+        
+        window.onload = function() { 
+            baglan(window.benimIdGlobal);
+            guncelleKonumButonu();
+        };
+        /*]]>*/
+    </script>
+    <script src="/js/mesaj.js"></script>
+    
+	<script>
+	        let konumModal;
+	        document.addEventListener('DOMContentLoaded', function() {
+	            var modalEl = document.getElementById('konumKapatModal');
+	            if(modalEl) {
+	                konumModal = new bootstrap.Modal(modalEl);
+	            }
+	        });
+
+	        function showToast(message) {
+	            const toast = document.getElementById("custom-toast");
+	            if(toast) {
+	                document.getElementById("toast-msg").innerText = message;
+	                toast.classList.add("show");
+	                setTimeout(() => { toast.classList.remove("show"); }, 4000);
+	            } else {
+	                alert(message);
+	            }
+	        }
+
+	        function guncelleKonumButonu() {
+	            const btn = document.getElementById("myLocIcon");
+	            const txt = document.getElementById("myLocText");
+	            const icon = document.getElementById("locIconSymbol");
+
+	            if (benimKonumumVar) {
+	                btn.style.backgroundColor = "#dcfce7";
+	                btn.style.color = "#166534";
+	                btn.style.border = "2px solid #166534";
+	                if(icon) icon.className = "fas fa-check"; 
+	                txt.innerText = "Aktif";
+	                txt.style.color = "#00a884";
+	                txt.style.fontWeight = "bold";
+	            } else {
+	                btn.style.backgroundColor = "#f0f2f5";
+	                btn.style.color = "#b60e26";
+	                btn.style.border = "1px dashed #b60e26";
+	                if(icon) icon.className = "fas fa-map-marker-alt";
+	                txt.innerText = "Paylaş";
+	                txt.style.color = "#262626";
+	                txt.style.fontWeight = "normal";
+	            }
+	        }
+
+	        function konumIslemi() {
+	            if (benimKonumumVar) {
+	                konumModal.show();
+	            } else {
+	                konumuAc();
+	            }
+	        }
+
+	        function konumuAc() {
+	            if (!navigator.geolocation) {
+	                showToast("Tarayıcınız konum özelliğini desteklemiyor.");
+	                return;
+	            }
+
+	            showToast("Konum alınıyor (Wi-Fi/GPS)...");
+
+	            navigator.geolocation.getCurrentPosition(
+	                // BAŞARILI
+	                function(position) {
+	                    console.log("Konum bulundu:", position);
+	                    const formData = new FormData();
+	                    formData.append('enlem', position.coords.latitude);
+	                    formData.append('boylam', position.coords.longitude);
+
+	                    fetch('/konum-guncelle', { method: 'POST', body: formData })
+	                    .then(response => {
+	                        if (response.ok) {
+	                            benimKonumumVar = true;
+	                            guncelleKonumButonu();
+	                            showToast("✅ Konum başarıyla paylaşıldı!");
+	                            setTimeout(() => location.reload(), 1000);
+	                        } else {
+	                            showToast("❌ Sunucu hatası.");
+	                        }
+	                    })
+	                    .catch(e => showToast("❌ Bağlantı hatası."));
+	                },
+	                // HATA
+	                function(error) {
+	                    console.error("Konum hatası detay:", error);
+	                    if(error.code === 1) showToast("❌ İzin reddedildi. Tarayıcı ayarlarından izin verin.");
+	                    else if(error.code === 2) showToast("❌ Konum bulunamadı (GPS/Wi-Fi kapalı olabilir).");
+	                    else if(error.code === 3) showToast("❌ Zaman aşımı! Tekrar deneyin.");
+	                    else showToast("❌ Bilinmeyen hata: " + error.message);
+	                },
+	                // --- İŞTE BURAYI DEĞİŞTİRDİK (DAHA ESNEK AYARLAR) ---
+	                {
+	                    enableHighAccuracy: false, // GPS zorlama, Wi-Fi ile bul (Daha hızlı)
+	                    timeout: 30000,            // 30 Saniye bekle
+	                    maximumAge: 60000          // Son 1 dakikadaki konumu kabul et
+	                }
+	            );
+	        }
+
+	        function konumuKapat() {
+	            fetch('/konum-guncelle', { method: 'POST' })
+	            .then(() => {
+	                benimKonumumVar = false;
+	                guncelleKonumButonu();
+	                konumModal.hide();
+	                showToast("Konum paylaşımı durduruldu.");
+	                setTimeout(() => location.reload(), 1000);
+	            });
+	        }
+	    </script>
+
+</body>
+</html>

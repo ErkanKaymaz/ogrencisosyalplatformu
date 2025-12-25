@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Yönetici Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-4 fixed-top">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1"><i class="fas fa-user-shield"></i> KampüsApp Yönetim</span>
+        <a href="/" class="btn btn-outline-light btn-sm">Siteye Dön</a>
+    </div>
+</nav>
+
+<div class="container mt-5 pt-4">
+    
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="card-title opacity-75">Toplam Öğrenci</h6>
+                    <h1 class="display-4 fw-bold" th:text="${#lists.size(tumOgrenciler)}">0</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="card-title opacity-75">Toplam Gönderi</h6>
+                    <h1 class="display-4 fw-bold" th:text="${#lists.size(tumGonderiler)}">0</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="card-title opacity-75 text-dark">Toplam Yorum</h6>
+                    <h1 class="display-4 fw-bold text-dark" th:text="${#lists.size(tumYorumlar)}">0</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-primary" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                <i class="fas fa-users"></i> Kullanıcılar
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-primary" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button">
+                <i class="fas fa-stream"></i> Gönderiler
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-primary" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button">
+                <i class="fas fa-comments"></i> Yorumlar
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom shadow-sm" id="myTabContent">
+        
+        <div class="tab-pane fade show active" id="users">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" id="userSearch" class="form-control" placeholder="İsim veya Kullanıcı Adı ara..." onkeyup="filterUsers()">
+                </div>
+                <div class="col-md-4">
+                    <select id="userFilter" class="form-select" onchange="filterUsers()">
+                        <option value="all">Tüm Roller</option>
+                        <option value="ADMIN">Sadece Yöneticiler</option>
+                        <option value="USER">Sadece Öğrenciler</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>ID</th><th>Profil</th><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Bölüm</th><th>Rol</th><th>İşlem</th></tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr th:each="kisi : ${tumOgrenciler}" th:data-role="${kisi.rol}">
+                            <td th:text="${kisi.id}">1</td>
+                            <td>
+                                <img th:if="${kisi.profilResmiBase64 != null}" th:src="@{'data:image/png;base64,' + ${kisi.profilResmiBase64}}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">
+                                <div th:if="${kisi.profilResmiBase64 == null}" class="nav-avatar bg-secondary" style="width:30px; height:30px; font-size:12px;"><span th:text="${#strings.substring(kisi.adSoyad,0,1)}">A</span></div>
+                            </td>
+                            <td th:text="${kisi.adSoyad}">Ali</td>
+                            <td th:text="${kisi.kullaniciAdi}">ali123</td>
+                            <td th:text="${kisi.bolum}">Ceng</td>
+                            <td>
+                                <span th:if="${kisi.rol == 'ADMIN'}" class="badge bg-danger">YÖNETİCİ</span>
+                                <span th:if="${kisi.rol != 'ADMIN'}" class="badge bg-info">ÖĞRENCİ</span>
+                            </td>
+                            <td>
+                                <button th:if="${kisi.rol != 'ADMIN'}" 
+                                        class="btn btn-danger btn-sm rounded-pill px-3"
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#userSilModal-' + ${kisi.id}">
+                                    <i class="fas fa-trash"></i> Sil
+                                </button>
+                                <div class="modal fade" th:id="'userSilModal-' + ${kisi.id}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                                            <div class="modal-header text-white" style="background: linear-gradient(135deg, #b60e26, #d41332);">
+                                                <h5 class="modal-title fw-bold"><i class="fas fa-user-times me-2"></i> Hesabı Sil</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-4 text-center bg-light">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                                    <h5 class="fw-bold text-dark">Emin misiniz?</h5>
+                                                    <p class="text-muted mb-1">Aşağıdaki kullanıcı ve tüm verileri silinecektir.</p>
+                                                    <div class="alert alert-danger mt-3 py-2 shadow-sm border-0">
+                                                        <strong th:text="${kisi.adSoyad}"></strong> <br>
+                                                        <small th:text="'@' + ${kisi.kullaniciAdi}"></small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer justify-content-center border-0 bg-light pb-4">
+                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">İptal</button>
+                                                <a th:href="@{/admin/kullanici-sil/{id}(id=${kisi.id})}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Evet, Sil</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="posts">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" id="postSearch" class="form-control" placeholder="Gönderi içeriğinde ara..." onkeyup="filterPosts()">
+                </div>
+                <div class="col-md-4">
+                    <select id="postFilter" class="form-select" onchange="filterPosts()">
+                        <option value="all">Tüm Gönderiler</option>
+                        <option value="image">Görselli Gönderiler</option>
+                        <option value="text">Sadece Metin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead class="table-light">
+                        <tr><th>Paylaşan</th><th>İçerik</th><th>Görsel</th><th>Tarih</th><th>İşlem</th></tr>
+                    </thead>
+                    <tbody id="postTableBody">
+                        <tr th:each="gonderi : ${tumGonderiler}" 
+                            th:data-type="${gonderi.resimBase64 != null} ? 'image' : 'text'">
+                            
+                            <td class="fw-bold" th:text="${gonderi.ogrenci.adSoyad}">Veli</td>
+                            <td>
+                                <span th:text="${#strings.abbreviate(gonderi.metin, 40)}"></span>
+                                <span th:if="${gonderi.metin == null or gonderi.metin.isEmpty()}" class="text-muted fst-italic small">(Sadece Görsel)</span>
+                            </td>
+                            <td>
+                                <img th:if="${gonderi.resimBase64 != null}" th:src="@{'data:image/png;base64,' + ${gonderi.resimBase64}}" style="height: 40px; border-radius: 4px;">
+                                <span th:if="${gonderi.resimBase64 == null}" class="text-muted small">-</span>
+                            </td>
+                            <td th:text="${#temporals.format(gonderi.tarih, 'dd.MM HH:mm')}">Tarih</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#silModal-' + ${gonderi.id}">
+                                    <i class="fas fa-ban me-1"></i> Kaldır
+                                </button>
+                                <div class="modal fade" th:id="'silModal-' + ${gonderi.id}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                                            <div class="modal-header text-white" style="background: linear-gradient(135deg, #b60e26, #d41332);">
+                                                <h5 class="modal-title fw-bold"><i class="fas fa-shield-alt me-2"></i> Müdahale Et</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form th:action="@{/admin/gonderi-sil}" method="post">
+                                                <div class="modal-body p-4 text-center bg-light">
+                                                    <input type="hidden" name="gonderiId" th:value="${gonderi.id}">
+                                                    <div class="mb-3">
+                                                        <div th:if="${gonderi.resimBase64 != null}" class="mb-2">
+                                                            <img th:src="@{'data:image/png;base64,' + ${gonderi.resimBase64}}" style="max-height: 100px; border-radius: 10px;">
+                                                        </div>
+                                                        <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                        <h6 class="fw-bold text-dark">Bu gönderiyi kaldırmak üzeresiniz.</h6>
+                                                    </div>
+                                                    <div class="form-floating">
+                                                        <textarea name="sebep" class="form-control border-0 shadow-sm" placeholder="Sebep" style="height: 100px" required></textarea>
+                                                        <label>Kaldırılma Sebebi...</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer justify-content-center border-0 bg-light pb-4">
+                                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">İptal</button>
+                                                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Onayla ve Sil</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="comments">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" id="commentSearch" class="form-control" placeholder="Yorumlarda ara..." onkeyup="filterComments()">
+                </div>
+                <div class="col-md-4">
+                    <select id="commentFilter" class="form-select" onchange="filterComments()">
+                        <option value="all">Tüm Yorumlar</option>
+                        <option value="image">Görselli Yorumlar</option>
+                        <option value="text">Sadece Metin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Yazan Kişi</th>
+                            <th>Yorum İçeriği</th>
+                            <th>Hangi Gönderiye?</th>
+                            <th>Tarih</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commentTableBody">
+                        <tr th:each="yorum : ${tumYorumlar}"
+                            th:data-type="${yorum.resimBase64 != null} ? 'image' : 'text'">
+                            
+                            <td class="fw-bold text-primary" th:text="${yorum.yazar.adSoyad}">Ali</td>
+                            
+                            <td>
+                                <span th:if="${yorum.icerik != null and !yorum.icerik.isEmpty()}" th:text="${yorum.icerik}"></span>
+                                <span th:if="${(yorum.icerik == null or yorum.icerik.isEmpty()) and yorum.resimBase64 != null}" class="badge bg-secondary">
+                                    <i class="fas fa-image"></i> Görsel Yorum
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <div class="small text-muted border rounded p-1 bg-light d-inline-flex align-items-center">
+                                    <i class="fas fa-quote-left me-2"></i>
+                                    <span th:if="${yorum.gonderi.metin != null and !yorum.gonderi.metin.isEmpty()}" 
+                                          th:text="${#strings.abbreviate(yorum.gonderi.metin, 30)}"></span>
+                                    <div th:if="${(yorum.gonderi.metin == null or yorum.gonderi.metin.isEmpty()) and yorum.gonderi.resimBase64 != null}">
+                                        <img th:src="@{'data:image/png;base64,' + ${yorum.gonderi.resimBase64}}" style="height: 30px; width: 30px; object-fit: cover; border-radius: 4px;" title="Görsel Gönderi">
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td th:text="${#temporals.format(yorum.tarih, 'dd.MM HH:mm')}">Tarih</td>
+                            
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#yorumSilModal-' + ${yorum.id}">
+                                    <i class="fas fa-trash-alt"></i> Sil
+                                </button>
+                                <div class="modal fade" th:id="'yorumSilModal-' + ${yorum.id}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                                            <div class="modal-header text-white" style="background: linear-gradient(135deg, #b60e26, #d41332);">
+                                                <h5 class="modal-title fw-bold"><i class="fas fa-comment-slash me-2"></i> Yorumu Kaldır</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form th:action="@{/admin/yorum-sil}" method="post">
+                                                <div class="modal-body p-4 text-center bg-light">
+                                                    <input type="hidden" name="yorumId" th:value="${yorum.id}">
+                                                    <div th:if="${yorum.resimBase64 != null}" class="mb-2">
+                                                        <img th:src="@{'data:image/png;base64,' + ${yorum.resimBase64}}" style="max-height: 80px; border-radius: 8px;">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                        <p class="text-dark fw-bold mb-1">Bu yorumu silmek üzeresiniz.</p>
+                                                    </div>
+                                                    <div class="form-floating">
+                                                        <textarea name="sebep" class="form-control border-0 shadow-sm" placeholder="Sebep" style="height: 100px" required></textarea>
+                                                        <label>Silinme Sebebi...</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer justify-content-center border-0 bg-light pb-4">
+                                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">İptal</button>
+                                                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Onayla ve Sil</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // FİLTRELEME FONKSİYONLARI (GÜNCELLENDİ)
+
+    function filterUsers() {
+        let text = document.getElementById('userSearch').value.toLowerCase();
+        let role = document.getElementById('userFilter').value;
+        
+        document.querySelectorAll('#userTableBody tr').forEach(row => {
+            let rowText = row.innerText.toLowerCase();
+            let rowRole = row.getAttribute('data-role');
+            
+            // Hem metin uyuşmalı HEM DE rol uyuşmalı (veya 'all' olmalı)
+            let textMatch = rowText.includes(text);
+            let roleMatch = (role === 'all') || (rowRole === role);
+            
+            row.style.display = (textMatch && roleMatch) ? '' : 'none';
+        });
+    }
+
+    function filterPosts() {
+        let text = document.getElementById('postSearch').value.toLowerCase();
+        let type = document.getElementById('postFilter').value;
+        
+        document.querySelectorAll('#postTableBody tr').forEach(row => {
+            let rowText = row.innerText.toLowerCase();
+            let rowType = row.getAttribute('data-type');
+            
+            let textMatch = rowText.includes(text);
+            let typeMatch = (type === 'all') || (rowType === type);
+            
+            row.style.display = (textMatch && typeMatch) ? '' : 'none';
+        });
+    }
+
+    function filterComments() {
+        let text = document.getElementById('commentSearch').value.toLowerCase();
+        let type = document.getElementById('commentFilter').value;
+        
+        document.querySelectorAll('#commentTableBody tr').forEach(row => {
+            let rowText = row.innerText.toLowerCase();
+            let rowType = row.getAttribute('data-type');
+            
+            let textMatch = rowText.includes(text);
+            let typeMatch = (type === 'all') || (rowType === type);
+            
+            row.style.display = (textMatch && typeMatch) ? '' : 'none';
+        });
+    }
+</script>
+
+</body>
+</html>
